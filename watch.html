@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Video Library</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#0f172a;
+    color:white;
+}
+
+header{
+    padding:20px;
+    text-align:center;
+    font-size:28px;
+    font-weight:bold;
+}
+
+#videoPlayerContainer{
+
+    width:90%;
+    max-width:1000px;
+
+    margin:20px auto;
+
+    display:none;
+}
+
+video{
+
+    width:100%;
+    border-radius:12px;
+}
+
+.grid{
+
+    width:95%;
+    margin:auto;
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fill,minmax(280px,1fr));
+
+    gap:20px;
+
+    padding:20px;
+}
+
+.card{
+
+    background:#1e293b;
+
+    border-radius:15px;
+
+    overflow:hidden;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+
+.card:hover{
+
+    transform:translateY(-5px);
+
+}
+
+.thumbnail{
+
+    width:100%;
+    height:180px;
+
+    object-fit:cover;
+}
+
+.content{
+
+    padding:15px;
+}
+
+.title{
+
+    font-size:18px;
+    font-weight:bold;
+
+    margin-bottom:8px;
+}
+
+.cost{
+
+    color:#22c55e;
+}
+
+.message{
+
+    text-align:center;
+    margin:20px;
+    color:#f87171;
+}
+.modal{
+
+    display:none;
+
+    position:fixed;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    background:
+    rgba(0,0,0,.85);
+
+    z-index:9999;
+
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-content{
+
+    width:90%;
+    max-width:1000px;
+}
+
+.modal video{
+
+    width:100%;
+    border-radius:12px;
+}
+
+.close{
+
+    color:white;
+
+    font-size:40px;
+
+    cursor:pointer;
+
+    float:right;
+
+    margin-bottom:10px;
+}
+</style>
+
+</head>
+<body>
+<div id="videoModal" class="modal">
+
+    <div class="modal-content">
+
+        <span class="close"
+        onclick="closePlayer()">
+        &times;
+        </span>
+
+        <video
+        id="player"
+        controls
+        autoplay>
+        </video>
+
+    </div>
+
+</div>
+<header>
+🎬 Video Platform
+</header>
+
+<div id="videoPlayerContainer">
+
+    <video
+        id="player"
+        controls>
+    </video>
+
+</div>
+
+<div class="message"
+id="message">
+</div>
+
+<div class="grid"
+id="videoGrid">
+</div>
+
+<script>
+
+const API =
+"https://letbackend.onrender.com/api/videos";
+
+async function loadVideos(){
+
+    try{
+
+        const response =
+        await fetch(API);
+        
+        const data =
+        await response.json();
+        console.log(data);
+
+        const grid =
+        document.getElementById(
+            "videoGrid"
+        );
+
+        grid.innerHTML = "";
+
+        data.videos.forEach(video=>{
+
+            const card =
+            document.createElement(
+                "div"
+            );
+
+            card.className =
+            "card";
+
+            card.innerHTML = `
+
+                <img
+                class="thumbnail"
+                src="${video.thumbnailUrl}">
+
+                <div class="content">
+
+                    <div class="title">
+                        ${video.title}
+                    </div>
+
+                    <div class="cost">
+                        ${video.tokenCost}
+                        Tokens
+                    </div>
+
+                </div>
+
+            `;
+
+            card.onclick = ()=>{
+
+                playVideo(
+                    video.id
+                );
+
+            };
+
+            grid.appendChild(
+                card
+            );
+
+        });
+
+    }catch(err){
+
+        console.error(err);
+
+    }
+
+}
+
+async function playVideo(id){
+
+    try{
+
+        document.getElementById(
+            "message"
+        ).innerHTML =
+        "";
+
+        const response =
+        await fetch(
+            `${API}/watch/${id}`,
+            {
+                headers:{
+                    Authorization:
+                    `Bearer ${
+                    localStorage.getItem(
+                    "token"
+                    )}`
+                }
+            }
+        );
+
+        const data =
+        await response.json();
+
+        if(!response.ok){
+
+            document.getElementById(
+                "message"
+            ).innerHTML =
+            data.message;
+
+            return;
+        }
+
+        const player =
+document.getElementById(
+    "player"
+);
+
+player.src =
+data.videoUrl;
+
+document
+.getElementById(
+    "videoModal"
+)
+.style.display =
+"flex";
+
+player.play();
+
+        window.scrollTo({
+
+            top:0,
+
+            behavior:
+            "smooth"
+
+        });
+
+    }catch(err){
+
+        console.error(err);
+
+    }
+
+}
+
+loadVideos();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Upload Video</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#0f172a;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container{
+    width:100%;
+    max-width:700px;
+    background:#1e293b;
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 0 30px rgba(0,0,0,.3);
+}
+
+h1{
+    color:white;
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.form-group{
+    margin-bottom:18px;
+}
+
+label{
+    display:block;
+    color:#cbd5e1;
+    margin-bottom:8px;
+}
+
+input,
+textarea{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#334155;
+    color:white;
+}
+
+textarea{
+    resize:none;
+    height:120px;
+}
+
+input[type=file]{
+    padding:10px;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:#3b82f6;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:.9;
+}
+
+.progress{
+    margin-top:20px;
+    width:100%;
+    height:10px;
+    background:#334155;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    width:0%;
+    height:100%;
+    background:#22c55e;
+    transition:.3s;
+}
+
+.status{
+    margin-top:15px;
+    text-align:center;
+    color:white;
+}
+
+.preview{
+    margin-top:15px;
+}
+
+.preview img{
+    width:100%;
+    max-height:250px;
+    object-fit:cover;
+    border-radius:12px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🎬 Upload Video</h1>
+
+    <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="title">
+    </div>
+
+    <div class="form-group">
+        <label>Description</label>
+        <textarea id="description"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label>Token Cost</label>
+        <input type="number" id="tokenCost" value="5">
+    </div>
+
+    <div class="form-group">
+        <label>Video File</label>
+        <input type="file" id="video" accept="video/*">
+    </div>
+
+    <div class="form-group">
+        <label>Thumbnail</label>
+        <input type="file" id="thumbnail" accept="image/*">
+    </div>
+
+    <div class="preview">
+        <img id="thumbPreview">
+    </div>
+
+    <button onclick="uploadVideo()">
+        Upload Video
+    </button>
+
+    <div class="progress">
+        <div class="progress-bar" id="bar"></div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+</div>
+
+<script>
+
+const thumbnailInput =
+document.getElementById("thumbnail");
+
+thumbnailInput.addEventListener(
+"change",
+e=>{
+
+    const file =
+    e.target.files[0];
+
+    if(!file) return;
+
+    const url =
+    URL.createObjectURL(file);
+
+    document.getElementById(
+    "thumbPreview"
+    ).src = url;
+
+});
+
+function uploadVideo(){
+
+    const title =
+    document.getElementById(
+    "title"
+    ).value;
+
+    const description =
+    document.getElementById(
+    "description"
+    ).value;
+
+    const tokenCost =
+    document.getElementById(
+    "tokenCost"
+    ).value;
+
+    const video =
+    document.getElementById(
+    "video"
+    ).files[0];
+
+    const thumbnail =
+    document.getElementById(
+    "thumbnail"
+    ).files[0];
+
+    if(!video){
+
+        alert(
+        "Select a video"
+        );
+
+        return;
+    }
+
+    const formData =
+    new FormData();
+
+    formData.append(
+    "title",
+    title
+    );
+
+    formData.append(
+    "description",
+    description
+    );
+
+    formData.append(
+    "tokenCost",
+    tokenCost
+    );
+
+    formData.append(
+    "video",
+    video
+    );
+
+    if(thumbnail){
+
+        formData.append(
+        "thumbnail",
+        thumbnail
+        );
+
+    }
+
+    const xhr =
+    new XMLHttpRequest();
+
+    xhr.open(
+    "POST",
+    "https://letbackend.onrender.com/api/videos/upload"
+    );
+
+    xhr.upload.onprogress =
+    e=>{
+
+        if(e.lengthComputable){
+
+            const percent =
+            (e.loaded/e.total)
+            *100;
+
+            document
+            .getElementById(
+            "bar"
+            )
+            .style.width =
+            percent+"%";
+
+        }
+
+    };
+
+    xhr.onload = () => {
+
+    const status =
+    document.getElementById(
+        "status"
+    );
+
+    if(xhr.status === 200 ||
+       xhr.status === 201){
+
+        status.innerHTML = `
+            <div style="
+                background:#22c55e;
+                color:white;
+                padding:15px;
+                border-radius:10px;
+                margin-top:15px;
+            ">
+                ✅ Video uploaded successfully!
+            </div>
+        `;
+
+        document.getElementById(
+            "bar"
+        ).style.width = "100%";
+
+    }else{
+
+        status.innerHTML = `
+            <div style="
+                background:#ef4444;
+                color:white;
+                padding:15px;
+                border-radius:10px;
+                margin-top:15px;
+            ">
+                ❌ Upload failed
+            </div>
+        `;
+
+    }
+    if(xhr.status === 200 ||
+   xhr.status === 201){
+
+    document.getElementById("title").value = "";
+    document.getElementById("description").value = "";
+    document.getElementById("tokenCost").value = 5;
+    document.getElementById("video").value = "";
+    document.getElementById("thumbnail").value = "";
+    document.getElementById("thumbPreview").src = "";
+}
+
+};
+
+    xhr.send(
+    formData
+    );
+
+}
+
+</script>
+
+</body>
+</html>
